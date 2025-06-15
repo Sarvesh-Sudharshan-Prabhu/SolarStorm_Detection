@@ -7,7 +7,6 @@ import { KpPredictionForm } from '@/components/dashboard/KpPredictionForm';
 import { KpDisplayCard } from '@/components/dashboard/KpDisplayCard';
 import { LiveTrendChart } from '@/components/dashboard/LiveTrendChart';
 import { HistoricalKpChart } from '@/components/dashboard/HistoricalKpChart';
-import { SatelliteImageryFeed } from '@/components/dashboard/SatelliteImageryFeed';
 import type { KpIndexPredictionResult } from '@/types';
 import { Separator } from '@/components/ui/separator';
 
@@ -36,9 +35,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <Separator className="my-8 md:my-12" />
-
-        <SatelliteImageryFeed />
+        {/* <Separator className="my-8 md:my-12" /> */}
+        {/* SatelliteImageryFeed component removed */}
 
       </PageWrapper>
       <footer className="py-4 px-4 md:px-8 border-t border-border/50 mt-auto">

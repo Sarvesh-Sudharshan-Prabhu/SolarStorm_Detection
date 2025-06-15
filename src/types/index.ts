@@ -17,11 +17,4 @@ export interface HistoricalDataPoint {
   kpIndex: number;
 }
 
-export interface SatelliteImage {
-  id: string;
-  src: string;
-  alt: string;
-  timestamp: string;
-  source: string;
-  dataAiHint: string;
-}
+// SatelliteImage type removed
