@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Activity, Info, Loader2, AlertTriangle } from 'lucide-react';
+import { Activity, Info, Loader2 } from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,18 +13,32 @@ import {
   Legend,
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { SolarWindParameterDataPoint, SolarWindDataInput } from '@/types';
+import type { SolarWindParameterDataPoint } from '@/types';
 import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { fetchLatestSolarWindData } from '@/app/actions'; // Import the server action
 
-const MAX_DATA_POINTS = 30; // Show the last 30 data points
-const FETCH_INTERVAL = 60 * 1000; // Fetch every 60 seconds
+const generateMockSolarWindData = (points: number): SolarWindParameterDataPoint[] => {
+  const data: SolarWindParameterDataPoint[] = [];
+  const now = new Date();
+  for (let i = points - 1; i >= 0; i--) {
+    // Simulate data points spread over a period, e.g., last 24 hours if points = 24
+    const time = new Date(now.getTime() - i * (24 / Math.max(1, points)) * 60 * 60 * 1000); 
+    data.push({
+      time: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+      bz: parseFloat(((Math.random() * 50) - 25).toFixed(1)), // Bz range e.g., -25 to +25 nT
+      speed: parseFloat((Math.random() * 700 + 300).toFixed(0)), // Speed e.g., 300-1000 km/s
+      density: parseFloat((Math.random() * 20 + 1).toFixed(1)), // Density e.g., 1-21 p/cm³
+    });
+  }
+  return data;
+};
 
 const glossary: Record<string, { term: string; definition: string }> = {
   bz: { term: "Bz (nT)", definition: "The north-south component of the Interplanetary Magnetic Field (IMF). A southward Bz (negative values) is a key indicator for geomagnetic storms." },
@@ -62,57 +76,21 @@ const CustomLegend = (props: any) => {
 };
 
 export function SolarWindParametersChart() {
+  const [timeframe, setTimeframe] = useState<string>("24"); // Number of data points
   const [chartData, setChartData] = useState<SolarWindParameterDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const result = await fetchLatestSolarWindData();
-        if (result.error) {
-          throw new Error(result.error);
-        }
-        if (result.data) {
-          const now = new Date();
-          const newPoint: SolarWindParameterDataPoint = {
-            time: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
-            bz: result.data.bz,
-            speed: result.data.speed,
-            density: result.data.density,
-          };
-          setChartData(prevData => {
-            const updatedData = [...prevData, newPoint];
-            return updatedData.slice(-MAX_DATA_POINTS); // Keep only the last MAX_DATA_POINTS
-          });
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch live solar wind data.";
-        console.error("Error fetching solar wind data:", errorMessage);
-        setError(errorMessage);
-        // Optionally, clear chart data or show a specific error state in the chart
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData(); // Initial fetch
-    const intervalId = setInterval(fetchData, FETCH_INTERVAL);
-
-    return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  }, []);
-
+    setChartData(generateMockSolarWindData(parseInt(timeframe)));
+  }, [timeframe]);
 
   const foregroundColor = "hsl(var(--foreground))";
   const mutedColor = "hsl(var(--muted-foreground))";
   const gridColor = "hsl(var(--border))";
   const primaryColor = "hsl(var(--primary))";
   const accentColor = "hsl(var(--accent))";
-  const chartColor3 = "hsl(var(--chart-3))";
+  const chartColor3 = "hsl(var(--chart-3))"; // Ensure this color is defined in globals.css chart vars
 
   if (!mounted) {
      return (
@@ -120,13 +98,13 @@ export function SolarWindParametersChart() {
         <CardHeader>
           <CardTitle className="text-xl font-headline flex items-center gap-2">
             <Activity className="h-6 w-6 text-primary" />
-            <span>Live Solar Wind Parameters</span>
+            <span>Solar Wind Parameters</span>
           </CardTitle>
-          <CardDescription>Tracking key solar wind conditions, updated periodically.</CardDescription>
+          <CardDescription>Key solar wind conditions over a selected period.</CardDescription>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2 text-muted-foreground">Initializing live data feed...</p>
+           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-2 text-muted-foreground">Loading chart data...</p>
         </CardContent>
       </Card>
     );
@@ -136,49 +114,43 @@ export function SolarWindParametersChart() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
                 <CardTitle className="text-xl font-headline flex items-center gap-2">
                 <Activity className="h-6 w-6 text-primary" />
-                <span>Live Solar Wind Parameters</span>
+                <span>Solar Wind Parameters Trend</span>
                 </CardTitle>
-                <CardDescription>
-                  Tracking key solar wind conditions. Data attempts to update every {FETCH_INTERVAL / 1000 / 60} minute(s).
-                  {isLoading && chartData.length > 0 && <span className="text-xs ml-2">(Updating...)</span>}
-                </CardDescription>
+                <CardDescription>Visualizing key parameters over the past {timeframe} data points.</CardDescription>
             </div>
-             {isLoading && chartData.length === 0 && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+            <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger className="w-full sm:w-[150px] text-xs">
+                    <SelectValue placeholder="Data Points" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="6">Last 6 Points</SelectItem>
+                    <SelectItem value="12">Last 12 Points</SelectItem>
+                    <SelectItem value="24">Last 24 Points</SelectItem>
+                    <SelectItem value="48">Last 48 Points</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
       </CardHeader>
       <CardContent className="h-[300px] pt-6">
-        {error && !isLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-destructive">
-            <AlertTriangle className="h-10 w-10 mb-2" />
-            <p className="font-semibold">Error Fetching Data</p>
-            <p className="text-xs text-center max-w-md">{error}</p>
-            <p className="text-xs mt-2">Using fallback data in Kp Prediction Form if available.</p>
-          </div>
-        )}
-        {!error && chartData.length === 0 && isLoading && (
+        {chartData.length === 0 && mounted && (
            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
-            <p>Fetching initial live solar wind data...</p>
+            <p>Generating chart data...</p>
           </div>
         )}
-        {!error && chartData.length === 0 && !isLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <Activity className="h-10 w-10 mb-2" />
-            <p>No live data points yet. Waiting for the first update.</p>
-          </div>
-        )}
-        {!error && chartData.length > 0 && (
+        {chartData.length > 0 && mounted && (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis dataKey="time" stroke={mutedColor} tick={{ fill: mutedColor, fontSize: 12 }} />
               <YAxis yAxisId="left" stroke={mutedColor} tick={{ fill: mutedColor, fontSize: 12 }} domain={[-30, 30]} allowDataOverflow={true} />
-              <YAxis yAxisId="rightSpeed" orientation="right" stroke={mutedColor} tick={{ fill: mutedColor, fontSize: 12 }} domain={[200, 1200]} allowDataOverflow={true}/>
-              <YAxis yAxisId="rightDensity" orientation="right" stroke={mutedColor} tick={{ fill: mutedColor, fontSize: 12 }} domain={[0, 50]} dx={50} allowDataOverflow={true}/>
+              <YAxis yAxisId="rightSpeed" orientation="right" stroke={mutedColor} tick={{ fill: mutedColor, fontSize:12 }} domain={[200,1200]} allowDataOverflow={true}/>
+              <YAxis yAxisId="rightDensity" orientation="right" stroke={mutedColor} tick={{ fill: mutedColor, fontSize:12 }} domain={[0,50]} dx={50} allowDataOverflow={true}/>
+
               <RechartsTooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--background))',
@@ -199,7 +171,6 @@ export function SolarWindParametersChart() {
                 strokeWidth={2}
                 dot={{ r: 2, fill: primaryColor }}
                 activeDot={{ r: 5 }}
-                isAnimationActive={false}
               />
               <Line
                 yAxisId="rightSpeed"
@@ -210,18 +181,16 @@ export function SolarWindParametersChart() {
                 strokeWidth={2}
                 dot={{ r: 2, fill: accentColor }}
                 activeDot={{ r: 5 }}
-                isAnimationActive={false}
               />
               <Line
                 yAxisId="rightDensity"
                 type="monotone"
                 dataKey="density"
                 name="Density (p/cm³)"
-                stroke={chartColor3}
+                stroke={chartColor3} 
                 strokeWidth={2}
                 dot={{ r: 2, fill: chartColor3 }}
                 activeDot={{ r: 5 }}
-                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -230,4 +199,3 @@ export function SolarWindParametersChart() {
     </Card>
   );
 }
-
