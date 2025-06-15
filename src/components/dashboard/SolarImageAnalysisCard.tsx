@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { handleSolarImageAnalysis, type SolarImageAnalysisResult as ServerActionResult } from '@/app/actions';
 import type { SolarImageAnalysisDisplayResult } from '@/types';
-import { ImageUp, Loader2, AlertTriangle, CheckCircle2, ImageIcon } from 'lucide-react';
+import { ImageUp, Loader2, AlertTriangle, CheckCircle2, ImageIcon, SunDim, Sparkle, Aperture } from 'lucide-react';
 
 export function SolarImageAnalysisCard() {
   const { toast } = useToast();
@@ -24,13 +24,29 @@ export function SolarImageAnalysisCard() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Basic client-side validation for image type and size
+      if (!file.type.startsWith('image/')) {
+        toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please select an image file (e.g., JPG, PNG, GIF).' });
+        setSelectedFile(null);
+        setImagePreviewUrl(null);
+        if(fileInputRef.current) fileInputRef.current.value = ""; // Clear file input
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ variant: 'destructive', title: 'File Too Large', description: 'Please select an image smaller than 5MB.' });
+        setSelectedFile(null);
+        setImagePreviewUrl(null);
+        if(fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
-      setAnalysisResult(null); // Clear previous results
+      setAnalysisResult(null); 
     } else {
       setSelectedFile(null);
       setImagePreviewUrl(null);
@@ -63,7 +79,7 @@ export function SolarImageAnalysisCard() {
         setAnalysisResult({
           ...result.data,
           timestamp: new Date().toISOString(),
-          imagePreviewUrl: imagePreviewUrl, // Keep the preview for the result display
+          imagePreviewUrl: imagePreviewUrl, 
         });
         toast({
           title: 'Analysis Successful',
@@ -106,13 +122,13 @@ export function SolarImageAnalysisCard() {
       <CardHeader>
         <CardTitle className="text-xl font-headline flex items-center gap-2">
           <ImageIcon className="h-6 w-6 text-accent" />
-          <span>Solar Image Analysis</span>
+          <span>Solar Image Feature Analysis</span>
         </CardTitle>
-        <CardDescription>Upload a satellite image for AI-powered danger assessment.</CardDescription>
+        <CardDescription>Upload a satellite image for AI-powered feature identification and danger assessment.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="solar-image-upload" className="mb-2 block">Upload Satellite Image</Label>
+          <Label htmlFor="solar-image-upload" className="mb-2 block">Upload Satellite Image (max 5MB)</Label>
           <Input
             id="solar-image-upload"
             type="file"
@@ -178,11 +194,31 @@ export function SolarImageAnalysisCard() {
               <p className="font-medium">Danger Assessment:</p>
               <p className={`text-2xl font-bold ${dangerStyle.color}`}>{analysisResult.dangerAssessment}</p>
             </div>
-            <div>
-              <p className="font-medium">Detailed Analysis:</p>
+             <div>
+              <p className="font-medium">Detailed Analysis Overview:</p>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.detailedAnalysis}</p>
             </div>
-            <p className="text-xs text-muted-foreground">
+
+            {analysisResult.sunspotGroups && (
+              <div className="mt-2 p-2 bg-card-foreground/5 rounded-md">
+                <p className="font-medium flex items-center gap-1"><SunDim className="h-4 w-4 text-primary"/>Sunspot Groups:</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.sunspotGroups}</p>
+              </div>
+            )}
+            {analysisResult.solarFlares && (
+               <div className="mt-2 p-2 bg-card-foreground/5 rounded-md">
+                <p className="font-medium flex items-center gap-1"><Sparkle className="h-4 w-4 text-primary"/>Solar Flares:</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.solarFlares}</p>
+              </div>
+            )}
+            {analysisResult.otherPhenomena && (
+               <div className="mt-2 p-2 bg-card-foreground/5 rounded-md">
+                <p className="font-medium flex items-center gap-1"><Aperture className="h-4 w-4 text-primary"/>Other Phenomena (CMEs, Filaments, etc.):</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.otherPhenomena}</p>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground pt-2">
               Analyzed as of: {new Date(analysisResult.timestamp).toLocaleString()}
             </p>
           </div>
@@ -191,4 +227,3 @@ export function SolarImageAnalysisCard() {
     </Card>
   );
 }
-

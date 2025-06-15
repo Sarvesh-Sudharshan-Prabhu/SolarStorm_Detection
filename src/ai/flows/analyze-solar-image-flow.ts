@@ -3,7 +3,7 @@
 'use server';
 
 /**
- * @fileOverview AI flow for analyzing solar images to predict storm danger.
+ * @fileOverview AI flow for analyzing solar images to predict storm danger and identify features.
  *
  * - analyzeSolarImage - A function that handles the solar image analysis.
  * - AnalyzeSolarImageInput - The input type for the analyzeSolarImage function.
@@ -25,6 +25,9 @@ export type AnalyzeSolarImageInput = z.infer<typeof AnalyzeSolarImageInputSchema
 const AnalyzeSolarImageOutputSchema = z.object({
   dangerAssessment: z.string().describe('A textual assessment of the solar storm danger, e.g., Low, Moderate, High, Severe, Extreme.'),
   detailedAnalysis: z.string().describe('A detailed explanation of the features observed in the image and the reasoning for the danger assessment.'),
+  sunspotGroups: z.string().optional().describe('Description of observed sunspot groups, their complexity, and estimated count if possible (e.g., "Several complex sunspot groups visible.", "One large, isolated sunspot group.").'),
+  solarFlares: z.string().optional().describe('Description of observed solar flares, their intensity, and location if discernible (e.g., "M-class solar flare detected near the western limb.", "No significant flare activity observed.").'),
+  otherPhenomena: z.string().optional().describe('Description of other relevant phenomena like coronal mass ejections (CMEs), filaments, or coronal holes (e.g., "Large filament eruption observed.", "Coronal hole facing Earth.").'),
 });
 export type AnalyzeSolarImageOutput = z.infer<typeof AnalyzeSolarImageOutputSchema>;
 
@@ -38,12 +41,16 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeSolarImageOutputSchema},
   prompt: `You are an expert solar physicist and space weather forecaster.
 Analyze the provided image of solar activity.
-Identify any sunspots (note their complexity and size), solar flares (note their intensity and location), coronal mass ejections (CMEs) (note their size, speed, and direction if discernible), filaments, or other relevant phenomena.
-Based on your observations of these features in the image, assess the potential danger level of a solar storm originating from the observed activity.
-The danger assessment should be one of: Low, Moderate, High, Severe, Extreme.
-Provide a detailed analysis explaining the features you observed and how they contribute to your danger assessment.
+1.  Identify any sunspots: Note their complexity, size, and approximate number of groups.
+2.  Identify solar flares: Note their intensity (e.g., C, M, X-class if discernible) and location.
+3.  Identify other phenomena: Look for Coronal Mass Ejections (CMEs - note size, speed, direction if possible), filaments, coronal holes, or other relevant features.
+4.  Danger Assessment: Based on all observations, assess the potential danger level of a solar storm originating from the observed activity. The danger assessment must be one of: Low, Moderate, High, Severe, Extreme.
+5.  Detailed Analysis: Provide a detailed analysis explaining all the features you observed and how they contribute to your danger assessment and feature identification.
 
-Image for analysis: {{media url=imageDataUri}}`,
+Image for analysis: {{media url=imageDataUri}}
+
+Provide concise descriptions for sunspotGroups, solarFlares, and otherPhenomena. If a feature is not clearly visible or identifiable, state that (e.g., "Sunspot details unclear due to image resolution.").
+`,
 });
 
 const analyzeSolarImageFlow = ai.defineFlow(
@@ -57,4 +64,3 @@ const analyzeSolarImageFlow = ai.defineFlow(
     return output!;
   }
 );
-

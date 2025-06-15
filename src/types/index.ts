@@ -1,5 +1,5 @@
 
-import type { KpIndexForecastingOutput } from '@/ai/flows/kp-index-forecasting';
+import type { KpIndexForecastingOutput as AIKpIndexOutput } from '@/ai/flows/kp-index-forecasting';
 import type { AnalyzeSolarImageOutput as AISolarImageOutput } from '@/ai/flows/analyze-solar-image-flow';
 
 export interface SolarWindDataInput {
@@ -8,6 +8,11 @@ export interface SolarWindDataInput {
   speed: number;
   density: number;
   dst: number;
+}
+
+// Extended KpIndexForecastingOutput from AI flow
+export interface KpIndexForecastingOutput extends AIKpIndexOutput {
+  auroraVisibilityForecast?: string; // Added for Aurora Forecast
 }
 
 export interface KpIndexPredictionResult extends KpIndexForecastingOutput {
@@ -33,11 +38,29 @@ export interface ConfusionMatrixData {
   matrix: number[][];
 }
 
-// Types for Solar Image Analysis
-export type AnalyzeSolarImageOutput = AISolarImageOutput;
+// Extended AnalyzeSolarImageOutput from AI flow
+export interface AnalyzeSolarImageOutput extends AISolarImageOutput {
+  sunspotGroups?: string;
+  solarFlares?: string;
+  otherPhenomena?: string;
+}
 
 export interface SolarImageAnalysisDisplayResult extends AnalyzeSolarImageOutput {
   timestamp: string;
   imagePreviewUrl?: string;
 }
 
+// For Historical Event Context
+export interface HistoricalSolarEvent {
+  name: string;
+  year: string; // Or Date
+  estimatedKp?: number; // Kp might not always be known, or is an estimate
+  description: string;
+  impactSummary: string;
+}
+
+// Glossary Term type (optional, could be defined inline if simple)
+export interface GlossaryTerm {
+  term: string;
+  definition: string;
+}

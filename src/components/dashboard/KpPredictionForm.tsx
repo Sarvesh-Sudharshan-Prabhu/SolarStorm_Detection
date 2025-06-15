@@ -19,8 +19,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { handleKpIndexPrediction, type PredictionResult } from '@/app/actions';
 import type { KpIndexPredictionResult } from '@/types';
-import { WandSparkles, Loader2 } from 'lucide-react';
+import { WandSparkles, Loader2, Info } from 'lucide-react';
 import React from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const formSchema = z.object({
   bz: z.coerce.number().min(-100, "Bz must be >= -100").max(100, "Bz must be <= 100"),
@@ -37,6 +43,32 @@ interface KpPredictionFormProps {
 
 const defaultModelUri = "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="; // Placeholder "Hello, World!"
 
+const glossary: Record<string, string> = {
+  bz: "Bz GSM (Interplanetary Magnetic Field, Z-component in Geocentric Solar Magnetospheric coordinates): The north-south direction of the solar wind's magnetic field. A strong southward Bz (negative values) is a key indicator for geomagnetic storms as it allows solar wind energy to more easily enter Earth's magnetosphere.",
+  bt: "Bt (Total Interplanetary Magnetic Field strength): The overall strength of the solar wind's magnetic field. Higher Bt values generally indicate a more disturbed solar wind.",
+  speed: "Solar Wind Speed: The speed at which charged particles from the sun (solar wind) travel. Faster solar wind can lead to stronger geomagnetic activity.",
+  density: "Solar Wind Density: The number of solar wind particles (protons) per cubic centimeter. Higher density can also contribute to stronger geomagnetic effects.",
+  dst: "Dst Index (Disturbance Storm Time Index): A measure of geomagnetic storm intensity based on the average change of the horizontal component of Earth's magnetic field at mid-latitude stations. More negative values indicate stronger storms."
+};
+
+const FormLabelWithTooltip = ({ fieldName, children }: { fieldName: keyof typeof glossary, children: React.ReactNode }) => (
+  <FormLabel>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="flex items-center gap-1 underline decoration-dotted cursor-help">
+            {children} <Info className="h-3 w-3 text-muted-foreground" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="start" className="max-w-xs p-2">
+          <p>{glossary[fieldName]}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </FormLabel>
+);
+
+
 export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -44,11 +76,11 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      bz: -20.0,      // Strongly southward Bz, indicative of high activity
-      bt: 25.0,       // Strong total magnetic field
-      speed: 800,     // Very fast solar wind
-      density: 20.0,  // High solar wind density
-      dst: -100,      // Significant geomagnetic storm level Dst
+      bz: -20.0,
+      bt: 25.0,
+      speed: 750,
+      density: 15.0,
+      dst: -150,
       modelDataUri: defaultModelUri,
     },
   });
@@ -108,7 +140,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 name="bz"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bz GSM (nT)</FormLabel>
+                    <FormLabelWithTooltip fieldName="bz">Bz GSM (nT)</FormLabelWithTooltip>
                     <FormControl>
                       <Input type="number" step="0.1" placeholder="-20.0" {...field} />
                     </FormControl>
@@ -121,7 +153,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 name="bt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bt (nT)</FormLabel>
+                    <FormLabelWithTooltip fieldName="bt">Bt (nT)</FormLabelWithTooltip>
                     <FormControl>
                       <Input type="number" step="0.1" placeholder="25.0" {...field} />
                     </FormControl>
@@ -134,9 +166,9 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 name="speed"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Solar Wind Speed (km/s)</FormLabel>
+                    <FormLabelWithTooltip fieldName="speed">Solar Wind Speed (km/s)</FormLabelWithTooltip>
                     <FormControl>
-                      <Input type="number" step="10" placeholder="800" {...field} />
+                      <Input type="number" step="10" placeholder="750" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,9 +179,9 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 name="density"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Solar Wind Density (protons/cm³)</FormLabel>
+                    <FormLabelWithTooltip fieldName="density">Solar Wind Density (p/cm³)</FormLabelWithTooltip>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="20.0" {...field} />
+                      <Input type="number" step="0.1" placeholder="15.0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,9 +192,9 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 name="dst"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Dst Index (nT)</FormLabel>
+                    <FormLabelWithTooltip fieldName="dst">Dst Index (nT)</FormLabelWithTooltip>
                     <FormControl>
-                      <Input type="number" step="1" placeholder="-100" {...field} />
+                      <Input type="number" step="1" placeholder="-150" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -172,7 +204,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 control={form.control}
                 name="modelDataUri"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-2">
                     <FormLabel>ML Model Data URI</FormLabel>
                     <FormControl>
                       <Input placeholder="data:application/octet-stream;base64,..." {...field} />
