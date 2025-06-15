@@ -1,3 +1,51 @@
-export default function Home() {
-  return <></>;
+'use client';
+
+import React, { useState } from 'react';
+import { Header } from '@/components/layout/Header';
+import { PageWrapper } from '@/components/layout/PageWrapper';
+import { KpPredictionForm } from '@/components/dashboard/KpPredictionForm';
+import { KpDisplayCard } from '@/components/dashboard/KpDisplayCard';
+import { LiveTrendChart } from '@/components/dashboard/LiveTrendChart';
+import { HistoricalKpChart } from '@/components/dashboard/HistoricalKpChart';
+import { SatelliteImageryFeed } from '@/components/dashboard/SatelliteImageryFeed';
+import type { KpIndexPredictionResult } from '@/types';
+import { Separator } from '@/components/ui/separator';
+
+export default function HomePage() {
+  const [currentPrediction, setCurrentPrediction] = useState<KpIndexPredictionResult | null>(null);
+
+  const handleNewPrediction = (result: KpIndexPredictionResult) => {
+    setCurrentPrediction(result);
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header />
+      <PageWrapper>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column / Top on Mobile */}
+          <div className="lg:col-span-1 space-y-6">
+            <KpPredictionForm onPredictionResult={handleNewPrediction} />
+            <KpDisplayCard prediction={currentPrediction} />
+          </div>
+
+          {/* Right Column / Bottom on Mobile */}
+          <div className="lg:col-span-2 space-y-6">
+            <LiveTrendChart />
+            <HistoricalKpChart />
+          </div>
+        </div>
+
+        <Separator className="my-8 md:my-12" />
+
+        <SatelliteImageryFeed />
+
+      </PageWrapper>
+      <footer className="py-4 px-4 md:px-8 border-t border-border/50 mt-auto">
+        <div className="container mx-auto text-center text-sm text-muted-foreground">
+          &copy; {new Date().getFullYear()} Solar Flare Forecaster. Powered by AI & Space Magic.
+        </div>
+      </footer>
+    </div>
+  );
 }
