@@ -20,19 +20,19 @@ const RealtimeSolarWindDataOutputSchema = z.object({
 });
 
 // Default mock data to use as a fallback or if APIs fail.
-// These values are set to typically produce a "High" Kp-index prediction.
+// These values are set to represent calm solar conditions.
 const defaultMockData: SolarWindDataInput = {
-  bz: -20.0,  // Strong southward
-  bt: 25.0,   // Strong total field
-  speed: 750, // Fast speed
-  density: 15.0, // High density
-  dst: -150,   // Significant storm levels
+  bz: 2.0,    // Slightly northward or near zero
+  bt: 5.0,    // Low total magnetic field strength
+  speed: 350, // Average to low solar wind speed
+  density: 5.0, // Average solar wind density
+  dst: -10,   // Quiet to unsettled geomagnetic conditions
 };
 
 export const getRealtimeSolarWindDataTool = ai.defineTool(
   {
     name: 'getRealtimeSolarWindDataTool',
-    description: 'Fetches the latest real-time solar wind data parameters (Bz, Bt, speed, density, Dst) from NOAA SWPC. Falls back to simulated high-activity data if API fetch fails or data is invalid.',
+    description: 'Fetches the latest real-time solar wind data parameters (Bz, Bt, speed, density, Dst) from NOAA SWPC. Falls back to simulated calm-activity data if API fetch fails or data is invalid.',
     inputSchema: z.object({}), // No input needed to fetch "latest"
     outputSchema: RealtimeSolarWindDataOutputSchema,
   },
@@ -109,7 +109,7 @@ export const getRealtimeSolarWindDataTool = ai.defineTool(
 
     } catch (error) {
       console.error('Error fetching or parsing real-time solar wind data:', error);
-      console.log('Falling back to simulated real-time data (High Activity).');
+      console.log('Falling back to simulated real-time data (Calm Activity).');
       return defaultMockData;
     }
   }
@@ -121,3 +121,4 @@ export const getRealtimeSolarWindDataTool = ai.defineTool(
 //   console.log("Fetched data:", data);
 // }
 // testTool();
+
