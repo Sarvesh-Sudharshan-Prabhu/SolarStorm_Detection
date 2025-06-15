@@ -23,3 +23,10 @@ export interface SolarWindParameterDataPoint {
   speed: number;
   density: number;
 }
+
+export type GeoeffectivenessLevel = "Low" | "Moderate" | "High" | "Severe" | "Extreme";
+
+export interface ConfusionMatrixData {
+  categories: GeoeffectivenessLevel[];
+  matrix: number[][]; // matrix[actual_idx][predicted_idx] = count
+}
