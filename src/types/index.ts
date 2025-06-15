@@ -38,4 +38,5 @@ export type AnalyzeSolarImageOutput = AISolarImageOutput;
 export interface SolarImageAnalysisDisplayResult extends AnalyzeSolarImageOutput {
   timestamp: string;
   imagePreviewUrl?: string;
+  // safetyRecommendationsAndImpacts is already part of AnalyzeSolarImageOutput via AISolarImageOutput
 }

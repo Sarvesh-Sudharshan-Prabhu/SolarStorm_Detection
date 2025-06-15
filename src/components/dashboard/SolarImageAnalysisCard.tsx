@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { handleSolarImageAnalysis, type SolarImageAnalysisResult as ServerActionResult } from '@/app/actions';
 import type { SolarImageAnalysisDisplayResult } from '@/types';
-import { ImageUp, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ImageUp, Loader2, AlertTriangle, CheckCircle2, ShieldQuestion } from 'lucide-react';
 
 export function SolarImageAnalysisCard() {
   const { toast } = useToast();
@@ -104,10 +104,10 @@ export function SolarImageAnalysisCard() {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="text-xl font-headline flex items-center gap-2">
-          <ImageUp className="h-6 w-6 text-accent" />
-          <span>Solar Image Analysis</span>
+          <ShieldQuestion className="h-6 w-6 text-accent" />
+          <span>Solar Image Analysis & Safety</span>
         </CardTitle>
-        <CardDescription>Upload a satellite image of solar activity for AI-powered danger assessment.</CardDescription>
+        <CardDescription>Upload a satellite image for AI danger assessment and safety advice.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -180,6 +180,10 @@ export function SolarImageAnalysisCard() {
             <div>
               <p className="font-medium">Detailed Analysis:</p>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.detailedAnalysis}</p>
+            </div>
+             <div>
+              <p className="font-medium">Safety Recommendations & Potential Impacts:</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult.safetyRecommendationsAndImpacts}</p>
             </div>
             <p className="text-xs text-muted-foreground">
               Analyzed as of: {new Date(analysisResult.timestamp).toLocaleString()}

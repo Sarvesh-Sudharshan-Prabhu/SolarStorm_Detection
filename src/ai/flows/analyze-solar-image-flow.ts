@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview AI flow for analyzing solar images to predict storm danger.
+ * @fileOverview AI flow for analyzing solar images to predict storm danger, and provide safety recommendations.
  *
  * - analyzeSolarImage - A function that handles the solar image analysis.
  * - AnalyzeSolarImageInput - The input type for the analyzeSolarImage function.
@@ -24,6 +24,7 @@ export type AnalyzeSolarImageInput = z.infer<typeof AnalyzeSolarImageInputSchema
 const AnalyzeSolarImageOutputSchema = z.object({
   dangerAssessment: z.string().describe('A textual assessment of the solar storm danger, e.g., Low, Moderate, High, Severe, Extreme.'),
   detailedAnalysis: z.string().describe('A detailed explanation of the features observed in the image and the reasoning for the danger assessment.'),
+  safetyRecommendationsAndImpacts: z.string().describe('Specific safety recommendations and potential impacts based on the assessed danger level. This should cover effects on power grids, satellite operations, radio communication, and aurora visibility if applicable.'),
 });
 export type AnalyzeSolarImageOutput = z.infer<typeof AnalyzeSolarImageOutputSchema>;
 
@@ -41,6 +42,12 @@ Identify any sunspots (note their complexity and size), solar flares (note their
 Based on your observations of these features in the image, assess the potential danger level of a solar storm originating from the observed activity.
 The danger assessment should be one of: Low, Moderate, High, Severe, Extreme.
 Provide a detailed analysis explaining the features you observed and how they contribute to your danger assessment.
+
+Finally, based on the assessed danger level, provide:
+1.  Specific safety recommendations for the general public and relevant industries (e.g., aviation, power grid operators, satellite operators).
+2.  A description of potential impacts on technology and human activities. Consider impacts on power grids (e.g., voltage irregularities, blackouts), satellite operations (e.g., GPS degradation, surface charging), radio communications (e.g., HF blackouts), and potential for aurora visibility at different latitudes.
+
+Format the safety recommendations and impacts clearly.
 
 Image for analysis: {{media url=imageDataUri}}`,
 });
