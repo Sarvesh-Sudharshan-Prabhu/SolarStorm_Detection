@@ -17,4 +17,9 @@ export interface HistoricalDataPoint {
   kpIndex: number;
 }
 
-// SatelliteImage type removed
+export interface SolarWindParameterDataPoint {
+  time: string;
+  bz: number;
+  speed: number;
+  density: number;
+}
