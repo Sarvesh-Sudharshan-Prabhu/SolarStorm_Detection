@@ -20,13 +20,13 @@ const RealtimeSolarWindDataOutputSchema = z.object({
 });
 
 // Default mock data to use as a fallback or if APIs fail.
-// These values are set to represent calm solar conditions.
+// These values are set to represent "unsettled calm" solar conditions, potentially leading to Kp ~3.
 const defaultMockData: SolarWindDataInput = {
-  bz: 2.0,    // Slightly northward or near zero
-  bt: 5.0,    // Low total magnetic field strength
-  speed: 350, // Average to low solar wind speed
-  density: 5.0, // Average solar wind density
-  dst: -10,   // Quiet to unsettled geomagnetic conditions
+  bz: -1.0,   // Slightly southward
+  bt: 6.0,    // Slightly elevated total magnetic field strength
+  speed: 400, // Average solar wind speed
+  density: 6.0, // Slightly elevated solar wind density
+  dst: -15,   // Slightly disturbed geomagnetic conditions
 };
 
 export const getRealtimeSolarWindDataTool = ai.defineTool(
@@ -38,6 +38,14 @@ export const getRealtimeSolarWindDataTool = ai.defineTool(
   },
   async (): Promise<SolarWindDataInput> => {
     console.log('Attempting to fetch real-time solar wind data from NOAA SWPC...');
+    let fetchedBz = defaultMockData.bz, 
+        fetchedBt = defaultMockData.bt, 
+        fetchedSpeed = defaultMockData.speed, 
+        fetchedDensity = defaultMockData.density, 
+        fetchedDst = defaultMockData.dst;
+    let magFetchSuccess = false;
+    let plasmaFetchSuccess = false;
+    let dstFetchSuccess = false;
 
     try {
       // --- Fetch Magnetic Field Data (Bz, Bt) ---
@@ -45,73 +53,87 @@ export const getRealtimeSolarWindDataTool = ai.defineTool(
       // Data: [time_tag, bx_gsm, by_gsm, bz_gsm, bt, lat_gsm, lon_gsm, source]
       const magResponse = await fetch('https://services.swpc.noaa.gov/json/solar-wind/mag_5m.json', { cache: 'no-store' }); // Using 5-minute resolution
       if (!magResponse.ok) {
-        console.warn(`NOAA Mag API request failed with status ${magResponse.status}`);
-        throw new Error('Failed to fetch magnetic field data');
-      }
-      const magData = await magResponse.json();
-      // The first entry is a header, the last entry in the array is the latest data.
-      // Indices: bz_gsm is 3, bt is 4
-      const latestMagEntry = magData && magData.length > 1 ? magData[magData.length - 1] : null;
-      let bz = latestMagEntry && latestMagEntry[3] !== null ? parseFloat(latestMagEntry[3]) : defaultMockData.bz;
-      let bt = latestMagEntry && latestMagEntry[4] !== null ? parseFloat(latestMagEntry[4]) : defaultMockData.bt;
-      
-      if (latestMagEntry === null || isNaN(bz) || isNaN(bt)) {
-          console.warn('NOAA Mag API returned invalid or null Bz/Bt values, using fallback.', latestMagEntry);
-          bz = defaultMockData.bz;
-          bt = defaultMockData.bt;
-      }
+        console.warn(`NOAA Mag API request failed with status ${magResponse.status}, using fallback for mag data.`);
+      } else {
+        const magData = await magResponse.json();
+        const latestMagEntry = magData && magData.length > 1 ? magData[magData.length - 1] : null;
+        const bzVal = latestMagEntry && latestMagEntry[3] !== null ? parseFloat(latestMagEntry[3]) : NaN;
+        const btVal = latestMagEntry && latestMagEntry[4] !== null ? parseFloat(latestMagEntry[4]) : NaN;
 
+        if (latestMagEntry !== null && !isNaN(bzVal) && !isNaN(btVal)) {
+          fetchedBz = bzVal;
+          fetchedBt = btVal;
+          magFetchSuccess = true;
+          console.log('Successfully fetched Bz and Bt from NOAA.');
+        } else {
+          console.warn('NOAA Mag API returned invalid or null Bz/Bt values, using fallback for mag data.', latestMagEntry);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching magnetic field data:', error, 'Using fallback for mag data.');
+    }
 
+    try {
       // --- Fetch Plasma Data (Speed, Density) ---
       // Data: [time_tag, density, speed, temperature, source]
       const plasmaResponse = await fetch('https://services.swpc.noaa.gov/json/solar-wind/plasma_5m.json', { cache: 'no-store' }); // Using 5-minute resolution
       if (!plasmaResponse.ok) {
-        console.warn(`NOAA Plasma API request failed with status ${plasmaResponse.status}`);
-        throw new Error('Failed to fetch plasma data');
+        console.warn(`NOAA Plasma API request failed with status ${plasmaResponse.status}, using fallback for plasma data.`);
+      } else {
+        const plasmaData = await plasmaResponse.json();
+        const latestPlasmaEntry = plasmaData && plasmaData.length > 1 ? plasmaData[plasmaData.length - 1] : null;
+        const densityVal = latestPlasmaEntry && latestPlasmaEntry[1] !== null ? parseFloat(latestPlasmaEntry[1]) : NaN;
+        const speedVal = latestPlasmaEntry && latestPlasmaEntry[2] !== null ? parseFloat(latestPlasmaEntry[2]) : NaN;
+        
+        if (latestPlasmaEntry !== null && !isNaN(densityVal) && !isNaN(speedVal)) {
+          fetchedDensity = densityVal;
+          fetchedSpeed = speedVal;
+          plasmaFetchSuccess = true;
+          console.log('Successfully fetched density and speed from NOAA.');
+        } else {
+          console.warn('NOAA Plasma API returned invalid or null density/speed values, using fallback for plasma data.', latestPlasmaEntry);
+        }
       }
-      const plasmaData = await plasmaResponse.json();
-      // Indices: density is 1, speed is 2
-      const latestPlasmaEntry = plasmaData && plasmaData.length > 1 ? plasmaData[plasmaData.length - 1] : null;
-      let density = latestPlasmaEntry && latestPlasmaEntry[1] !== null ? parseFloat(latestPlasmaEntry[1]) : defaultMockData.density;
-      let speed = latestPlasmaEntry && latestPlasmaEntry[2] !== null ? parseFloat(latestPlasmaEntry[2]) : defaultMockData.speed;
-       if (latestPlasmaEntry === null || isNaN(density) || isNaN(speed)) {
-          console.warn('NOAA Plasma API returned invalid or null density/speed values, using fallback.', latestPlasmaEntry);
-          density = defaultMockData.density;
-          speed = defaultMockData.speed;
-      }
-
+    } catch (error) {
+      console.error('Error fetching plasma data:', error, 'Using fallback for plasma data.');
+    }
+    
+    try {
       // --- Fetch Dst Index Data ---
       // Data: [time_tag, dst, source]
-      // Using the last 30 days of hourly final Dst data as an example. A more real-time source might be better for true live Dst.
       const dstResponse = await fetch('https://services.swpc.noaa.gov/json/kyoto_dst_1_hour.json', { cache: 'no-store' }); // Hourly final Dst
       if (!dstResponse.ok) {
-        console.warn(`NOAA Dst API request failed with status ${dstResponse.status}`);
-        throw new Error('Failed to fetch Dst index data');
+        console.warn(`NOAA Dst API request failed with status ${dstResponse.status}, using fallback for Dst data.`);
+      } else {
+        const dstData = await dstResponse.json();
+        const latestDstEntry = dstData && dstData.length > 1 ? dstData[dstData.length - 1] : null;
+        const dstVal = latestDstEntry && latestDstEntry[1] !== null ? parseFloat(latestDstEntry[1]) : NaN;
+
+        if (latestDstEntry !== null && !isNaN(dstVal)) {
+          fetchedDst = dstVal;
+          dstFetchSuccess = true;
+          console.log('Successfully fetched Dst from NOAA.');
+        } else {
+          console.warn('NOAA Dst API returned invalid or null Dst value, using fallback for Dst data.', latestDstEntry);
+        }
       }
-      const dstData = await dstResponse.json();
-      // Index: dst is 1
-      const latestDstEntry = dstData && dstData.length > 1 ? dstData[dstData.length - 1] : null;
-      let dst = latestDstEntry && latestDstEntry[1] !== null ? parseFloat(latestDstEntry[1]) : defaultMockData.dst;
-      if (latestDstEntry === null || isNaN(dst)) {
-          console.warn('NOAA Dst API returned invalid or null Dst value, using fallback.', latestDstEntry);
-          dst = defaultMockData.dst;
-      }
-
-
-      console.log('Successfully fetched and parsed real-time solar wind data from NOAA SWPC.');
-      return {
-        bz,
-        bt,
-        speed,
-        density,
-        dst,
-      };
-
     } catch (error) {
-      console.error('Error fetching or parsing real-time solar wind data:', error);
-      console.log('Falling back to simulated real-time data (Calm Activity).');
-      return defaultMockData;
+      console.error('Error fetching Dst index data:', error, 'Using fallback for Dst data.');
     }
+
+    if (magFetchSuccess && plasmaFetchSuccess && dstFetchSuccess) {
+      console.log('Successfully fetched and parsed all real-time solar wind data from NOAA SWPC.');
+    } else {
+      console.warn('One or more NOAA API calls failed or returned invalid data. Result includes fallback values.');
+    }
+
+    return {
+      bz: fetchedBz,
+      bt: fetchedBt,
+      speed: fetchedSpeed,
+      density: fetchedDensity,
+      dst: fetchedDst,
+    };
   }
 );
 
@@ -121,4 +143,3 @@ export const getRealtimeSolarWindDataTool = ai.defineTool(
 //   console.log("Fetched data:", data);
 // }
 // testTool();
-
