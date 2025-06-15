@@ -43,11 +43,11 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      bz: -5.0,
-      bt: 10.0,
-      speed: 450,
-      density: 5.0,
-      dst: -20,
+      bz: -15.0, // More negative Bz for higher activity
+      bt: 20.0,  // Higher Bt
+      speed: 700, // Higher speed
+      density: 15.0, // Higher density
+      dst: -70,   // More negative Dst, indicating storm conditions
       modelDataUri: defaultModelUri,
     },
   });
@@ -109,7 +109,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                   <FormItem>
                     <FormLabel>Bz GSM (nT)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="-5.0" {...field} />
+                      <Input type="number" step="0.1" placeholder="-15.0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -122,7 +122,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                   <FormItem>
                     <FormLabel>Bt (nT)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="10.0" {...field} />
+                      <Input type="number" step="0.1" placeholder="20.0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,7 +135,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                   <FormItem>
                     <FormLabel>Solar Wind Speed (km/s)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="10" placeholder="450" {...field} />
+                      <Input type="number" step="10" placeholder="700" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,7 +148,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                   <FormItem>
                     <FormLabel>Solar Wind Density (protons/cm³)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="5.0" {...field} />
+                      <Input type="number" step="0.1" placeholder="15.0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +161,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                   <FormItem>
                     <FormLabel>Dst Index (nT)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="1" placeholder="-20" {...field} />
+                      <Input type="number" step="1" placeholder="-70" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

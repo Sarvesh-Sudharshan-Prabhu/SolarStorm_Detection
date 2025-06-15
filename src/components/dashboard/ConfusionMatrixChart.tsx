@@ -20,36 +20,36 @@ const generateMockConfusionMatrix = (): number[][] => {
   const size = categories.length;
   const matrix = Array(size).fill(null).map(() => Array(size).fill(0));
 
-  // Simulate data for roughly 100 total predictions
-  matrix[0][0] = 18; // Actual Low, Predicted Low
-  matrix[0][1] = 2;  // Actual Low, Predicted Moderate
+  // Simulate data for ~100 total predictions, with higher accuracy on diagonal
+  matrix[0][0] = 20; // Actual Low, Predicted Low
+  matrix[0][1] = 1;  // Actual Low, Predicted Moderate
   matrix[0][2] = 1;
-  matrix[0][3] = 2;
-  matrix[0][4] = 1;
+  matrix[0][3] = 0;
+  matrix[0][4] = 0;
 
   matrix[1][0] = 1;
-  matrix[1][1] = 20; // Actual Moderate, Predicted Moderate
-  matrix[1][2] = 3;
+  matrix[1][1] = 22; // Actual Moderate, Predicted Moderate
+  matrix[1][2] = 1;
   matrix[1][3] = 1;
-  matrix[1][4] = 2;
+  matrix[1][4] = 0;
 
   matrix[2][0] = 1;
-  matrix[2][1] = 2;
-  matrix[2][2] = 15; // Actual High, Predicted High
-  matrix[2][3] = 2;
-  matrix[2][4] = 3;
+  matrix[2][1] = 1;
+  matrix[2][2] = 25; // Actual High, Predicted High (more accurate)
+  matrix[2][3] = 1;
+  matrix[2][4] = 1;
 
-  matrix[3][0] = 2;
+  matrix[3][0] = 0;
   matrix[3][1] = 1;
   matrix[3][2] = 1;
-  matrix[3][3] = 10; // Actual Severe, Predicted Severe
+  matrix[3][3] = 15; // Actual Severe, Predicted Severe
   matrix[3][4] = 1;
 
-  matrix[4][0] = 1;
-  matrix[4][1] = 2;
-  matrix[4][2] = 3;
+  matrix[4][0] = 0;
+  matrix[4][1] = 0;
+  matrix[4][2] = 1;
   matrix[4][3] = 1;
-  matrix[4][4] = 5;  // Actual Extreme, Predicted Extreme
+  matrix[4][4] = 8;  // Actual Extreme, Predicted Extreme
   
   return matrix;
 };
