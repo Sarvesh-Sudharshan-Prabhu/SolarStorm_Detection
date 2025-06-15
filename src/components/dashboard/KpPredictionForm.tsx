@@ -17,9 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { handleKpIndexPrediction, type PredictionResult } from '@/app/actions';
+import { handleKpIndexPrediction, type PredictionResult, fetchLatestSolarWindData, type RealtimeSolarWindResult } from '@/app/actions';
 import type { KpIndexPredictionResult } from '@/types';
-import { WandSparkles, Loader2, Info } from 'lucide-react';
+import { WandSparkles, Loader2, Info, DownloadCloud } from 'lucide-react';
 import React from 'react';
 import {
   Tooltip,
@@ -72,6 +72,7 @@ const FormLabelWithTooltip = ({ fieldName, children }: { fieldName: keyof typeof
 export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isFetchingRealtime, setIsFetchingRealtime] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -122,6 +123,42 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
     }
   }
 
+  async function handleFetchRealtimeData() {
+    setIsFetchingRealtime(true);
+    try {
+      const result: RealtimeSolarWindResult = await fetchLatestSolarWindData();
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Failed to Fetch Real-time Data",
+          description: result.error,
+        });
+      } else if (result.data) {
+        form.reset({ // Using reset to update multiple fields, or use setValue for individual fields
+          bz: result.data.bz,
+          bt: result.data.bt,
+          speed: result.data.speed,
+          density: result.data.density,
+          dst: result.data.dst,
+          modelDataUri: form.getValues("modelDataUri"), // Keep existing model URI
+        });
+        toast({
+          title: "Real-time Data Loaded",
+          description: "Form updated with latest (simulated) solar wind parameters.",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      toast({
+        variant: "destructive",
+        title: "Error Fetching Data",
+        description: errorMessage,
+      });
+    } finally {
+      setIsFetchingRealtime(false);
+    }
+  }
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -129,7 +166,7 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
           <WandSparkles className="h-6 w-6 text-accent" />
           <span>Predict Kp-index</span>
         </CardTitle>
-        <CardDescription>Input solar wind data to forecast Kp-index using AI.</CardDescription>
+        <CardDescription>Input solar wind data or load (simulated) real-time values to forecast Kp-index using AI.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -217,19 +254,34 @@ export function KpPredictionForm({ onPredictionResult }: KpPredictionFormProps) 
                 )}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Predicting...
-                </>
-              ) : (
-                <>
-                  <WandSparkles className="mr-2 h-4 w-4" />
-                  Generate Forecast
-                </>
-              )}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={handleFetchRealtimeData} className="w-full sm:w-auto" disabled={isFetchingRealtime || isSubmitting}>
+                {isFetchingRealtime ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading Data...
+                  </>
+                ) : (
+                  <>
+                    <DownloadCloud className="mr-2 h-4 w-4" />
+                    Load Real-time Data
+                  </>
+                )}
+              </Button>
+              <Button type="submit" className="w-full" disabled={isSubmitting || isFetchingRealtime}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Predicting...
+                  </>
+                ) : (
+                  <>
+                    <WandSparkles className="mr-2 h-4 w-4" />
+                    Generate Forecast
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>
