@@ -10,6 +10,7 @@ import { LiveTrendChart } from '@/components/dashboard/LiveTrendChart';
 import { HistoricalKpChart } from '@/components/dashboard/HistoricalKpChart';
 import { SolarWindParametersChart } from '@/components/dashboard/SolarWindParametersChart';
 import { ConfusionMatrixChart } from '@/components/dashboard/ConfusionMatrixChart';
+import { SolarImageAnalysisCard } from '@/components/dashboard/SolarImageAnalysisCard'; // New Import
 import type { KpIndexPredictionResult } from '@/types';
 import { Separator } from '@/components/ui/separator';
 
@@ -29,6 +30,7 @@ export default function HomePage() {
           <div className="lg:col-span-1 space-y-6">
             <KpPredictionForm onPredictionResult={handleNewPrediction} />
             <KpDisplayCard prediction={currentPrediction} />
+            <SolarImageAnalysisCard /> {/* New Component Added Here */}
           </div>
 
           {/* Right Column / Bottom on Mobile */}

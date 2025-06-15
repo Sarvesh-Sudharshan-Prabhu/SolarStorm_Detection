@@ -2,10 +2,16 @@
 'use server';
 
 import { forecastKpIndex, type KpIndexForecastingInput, type KpIndexForecastingOutput } from '@/ai/flows/kp-index-forecasting';
+import { analyzeSolarImage, type AnalyzeSolarImageInput, type AnalyzeSolarImageOutput } from '@/ai/flows/analyze-solar-image-flow';
 import type { SolarWindDataInput } from '@/types';
 
 export interface PredictionResult {
   data?: KpIndexForecastingOutput;
+  error?: string;
+}
+
+export interface SolarImageAnalysisResult {
+  data?: AnalyzeSolarImageOutput;
   error?: string;
 }
 
@@ -22,8 +28,21 @@ export async function handleKpIndexPrediction(
     return { data: result };
   } catch (err) {
     console.error('Error in Kp-index prediction:', err);
-    // Check if err is an instance of Error to safely access message property
-    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during prediction.';
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during Kp-index prediction.';
+    return { error: errorMessage };
+  }
+}
+
+export async function handleSolarImageAnalysis(
+  imageDataUri: string
+): Promise<SolarImageAnalysisResult> {
+  try {
+    const input: AnalyzeSolarImageInput = { imageDataUri };
+    const result = await analyzeSolarImage(input);
+    return { data: result };
+  } catch (err) {
+    console.error('Error in solar image analysis:', err);
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during image analysis.';
     return { error: errorMessage };
   }
 }
